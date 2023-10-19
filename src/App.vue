@@ -1,154 +1,55 @@
 <template>
-  <div id="app">
-   
-    <div id="container">
-    <h1>Cifrado y Descifrado Escítala</h1>
-      <label for="plaintext">Texto a cifrar/descifrar:</label>
-      <textarea v-model="plaintext" rows="4" cols="50"></textarea>
-
-      <label for="key">Clave (número de vueltas):</label>
-      <input type="number" v-model="key">
-      
-      <button @click="encrypt">Cifrar</button>
-      <button @click="decrypt">Descifrar</button>
-
-      <h2>Resultado:</h2>
-      <div id="result">{{ result }}</div>
+  <div class="container mt-5">
+    <div class="form-group">
+      <input v-model="plaintext" class="form-control" placeholder="Texto a cifrar" />
+    </div>
+    <div class="form-group">
+      <button @click="encrypt" class="btn btn-primary my-2">Cifrar</button>
+    </div>
+    <div class="form-group">
+      <p>Cifrado: {{ ciphertext }}</p>
+    </div>
+    <div class="form-group">
+      <button @click="decrypt" class="btn btn-primary my-2">Descifrar</button>
+    </div>
+    <div class="form-group">
+      <p>Descifrado: {{ decryptedText }}</p>
     </div>
   </div>
 </template>
 
-
 <script>
+import CryptoJS from 'crypto-js';
+
 export default {
   data() {
     return {
-      plaintext: "",
-      key: 4,
-      result: "",
+      plaintext: '',
+      ciphertext: '',
+      decryptedText: '',
+      secretKey: '1234567890123456', // 16 bytes (128 bits)
+      iv: CryptoJS.enc.Hex.parse('0123456789ABCDEF'), // Vector de inicialización
     };
   },
   methods: {
     encrypt() {
-      const encryptedText = this.escitalaEncrypt(this.plaintext, this.key);
-      this.result = "Texto cifrado: " + encryptedText;
+      const key = CryptoJS.enc.Utf8.parse(this.secretKey);
+      const encrypted = CryptoJS.TripleDES.encrypt(this.plaintext, key, {
+        iv: this.iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7,
+      });
+      this.ciphertext = encrypted.toString();
     },
     decrypt() {
-      const decryptedText = this.escitalaDecrypt(this.plaintext, this.key);
-      this.result = "Texto descifrado: " + decryptedText;
-    },
-    escitalaEncrypt(text, key) {
-      let result = "";
-      for (let i = 0; i < key; i++) {
-        for (let j = i; j < text.length; j += key) {
-          result += text[j];
-        }
-      }
-      return result;
-    },
-    escitalaDecrypt(text, key) {
-      const columns = Math.ceil(text.length / key);
-      const rows = key;
-      const missingChars = columns * rows - text.length;
-
-      let result = new Array(rows);
-      for (let i = 0; i < rows; i++) {
-        result[i] = new Array(columns);
-      }
-
-      let row = 0;
-      let col = 0;
-      for (let i = 0; i < text.length; i++) {
-        result[row][col] = text[i];
-        col++;
-        if ((col === columns) || (col === columns - 1 && row >= rows - missingChars)) {
-          col = 0;
-          row++;
-        }
-      }
-
-      let decryptedText = "";
-      for (let i = 0; i < columns; i++) {
-        for (let j = 0; j < rows; j++) {
-          if (result[j][i] !== undefined) {
-            decryptedText += result[j][i];
-          }
-        }
-      }
-
-      return decryptedText;
+      const key = CryptoJS.enc.Utf8.parse(this.secretKey);
+      const decrypted = CryptoJS.TripleDES.decrypt(this.ciphertext, key, {
+        iv: this.iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7,
+      });
+      this.decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
     },
   },
 };
 </script>
-
-<style scoped>
-#app {
-  font-family: Arial, sans-serif;
-  background-color: #f5f5f5;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-}
-
-#container {
-  text-align: center;
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  width: 80%;
-  max-width: 600px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.form {
-  margin-top: 20px;
-}
-
-h1 {
-  color: #333;
-  margin-top: 20px; /* Añade margen superior para centrar el título */
-  text-align: center; /* Centra horizontalmente el título */
-}
-
-label {
-  display: block;
-  margin-top: 10px;
-  color: #555;
-}
-
-textarea, input {
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-
-button {
-  padding: 10px 30px;
-  background-color: #007BFF;
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  margin-top: 20px;
-  border-radius: 5px;
-}
-
-button:hover {
-  background-color: #0056b3;
-}
-
-#result {
-  margin-top: 20px;
-  padding: 10px;
-  background-color: #eee;
-  color: #333;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
-</style>
